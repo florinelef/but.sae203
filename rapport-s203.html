@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+	<title>Rapport S2.03</title>
+	<link rel="stylesheet" href="src/sakura-dark.css" />
+    <title></title>
+  </head>
+  <body>
+<div class="s203">
+<p>Malori ALVAREZ, Florine LEFEBVRE &amp; Nathanaël COLLUMEAU</p>
+<h1 id="rapport-sae-2.03">Rapport SAE 2.03</h1>
+<p><u>Sommaire :</u></p>
+<blockquote>
+<p>→ <a href="#1S">1<sup>ère</sup> semaine</a><br />
+Installation de l’OS, sudo, suppléments invités, distribution debian
+&amp; automatisation<br />
+→ <a href="#2S">2<sup>ème</sup> semaine</a><br />
+Apprentissage du markdown, début des rapports sur StackEdit, réalisation
+de l’archive (html, pdf, source et readme)<br />
+→ <a href="#3S">3<sup>ème</sup> semaine</a><br />
+Setup du git et choix de l’interface graphique<br />
+→ <a href="#4S">4<sup>ème</sup> semaine</a><br />
+Setup de Gitea<br />
+</p>
+</blockquote>
+<h2 id="1S">1<sup>ère</sup> semaine</h2>
+<h3 id="drawing-création-de-la-1ère-vm"><img
+src="https://cdn-icons-png.flaticon.com/512/73/73575.png" width="35"
+alt="drawing" /> <mark>Création de la 1<sup>ère</sup> VM</mark></h3>
+<p>Tout d’abord, nous avons commencé en créant une nouvelle VM dans
+<strong>Oracle VM VirtualBox</strong> que nous avons appelée
+“<em>SAE203auto</em>”, sans aucun fichier iso, mais en sélectionnant le
+type (<strong>Linux</strong>) et la version (<strong>Debian 12
+Bookworm</strong> en version 64-bit). Par la suite, nous avons continué
+la création de la VM en laissant les paramètres par défaut. Cependant,
+il manquait le fichier iso, nous avons donc été dans la configuration de
+la VM, dans l’onglet <code>Storage</code>, puis dans
+“<code>Controller: IDE</code>” -&gt; “<code>Empty</code>” pour rajouter
+dans “<code>IDE Primary Device 0</code>” le fichier
+“<strong>S203-Debian12.viso</strong>” afin que les fichiers de
+configuration automatique se lancent convenablement.</p>
+<p><img
+src="https://lh7-us.googleusercontent.com/HwGyxgCVJ4FucrncIYnrRtDJVPEdrYU__IEii__UMg29YSwengtuclEehw575ZxLd2NAXWbh1VpI0xNDq_o1kRc3V7HD2PmTYJKxIz14KGTN7T8BkUGBZ_M6d1aJU1k5DbnO3vo9U3_ELN5BtngKaZY" /><br />
+Avant de lancer la VM, nous avons modifié les fichiers
+“<code>vboxpostinstall.sh</code>” et “<code>preseed-fr.cfg</code>” pour
+paramétrer notre VM, ainsi que l’uuid dans le fichier viso.</p>
+<p>Dans la <strong>preseed</strong>, on a modifié la ligne 83 afin
+d’avoir l’installation de mate :</p>
+<p><code>tasksel tasksel/first multiselect standard ssh-server, mate-desktop</code><br />
+</p>
+<p><strong><img
+src="https://lh7-us.googleusercontent.com/NXvSVVd-LuTqc8ObAwmz6XIFKAmHAJZ_OK8OafUy8bNNJKmjDhpUu9oPERd58B_ClqZOfV2UAREMnBZijqGrVuKCphyTQjMiojFAJzsT8ltba8KWeEGLdtXVldk-NC7NrDMONRHsnqa2n-hrjT5Un5s" /></strong><br />
+Dans le <strong>vboxpostinstall</strong>, nous avons ajouté dans la
+partie “Run user command” les commandes pour installer les
+fonctionnalités attendues :<br />
+<strong><img
+src="https://lh7-us.googleusercontent.com/UNWV9n-fmQzs8ckQ6X1Jv6B-sqRiQcOuRqqGqFoyHddPlooD2WQCCO5Nn3KV80svOt0gnpqwU0Pc20U3ihF7d2KU3x-EEJvqRnc7PBaEbutOic7IBDlwmiBTQYdecS9YvDb325QQ2BqxfhV5BRyTX68" /></strong><br />
+<code>log_command_in_target usermod -a -G sudo user</code></p>
+<p><code>log_command_in_target apt-get install sudo</code></p>
+<p><code>log_command_in_target sudo apt-get install git</code></p>
+<p><code>log_command_in_target sudo apt-get install sqlite3</code></p>
+<p><code>log_command_in_target sudo apt-get install curl</code></p>
+<p><code>log_command_in_target sudo apt-get install bash-completion</code></p>
+<p><code>log_command_in_target sudo apt-get install neofetch</code></p>
+<p>Nous avons rencontré quelques soucis à l’installation à cause de ces
+commandes, mais en commentant les 5 dernières lignes <em>( sudo
+apt-get…)</em> l’ensemble refonctionnait de nouveau, mais sans les
+installations.<br />
+Nous avons plus tard réalisé que le problème venait du fait que la
+commande <code>sudo</code> attend une entrée utilisateur, ce qui
+bloquait complètement l’exécution du script. De plus, ce script
+s’exécute déjà en tant que root, alors il nous a suffit de retirer
+<code>sudo</code> de toutes les commandes pour que le script
+fonctionne.</p>
+<h3 id="drawing-questions-configuration-matérielle-dans-virtualbox"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : Configuration
+matérielle dans VirtualBox</h3>
+<dl>
+<dt>Que signifie “64-bit” dans “Debian 64-bit” ?</dt>
+<dd>
+<ul>
+<li>C’est la largeur des registres soit la façon dont le processeur gère
+les informations qu’il doit effectuer.</li>
+</ul>
+</dd>
+<dt>Quelle est la configuration réseau utilisée par défaut ?</dt>
+<dd>
+<ul>
+<li>La configuration réseau utilisée par défaut est la configuration en
+mode <em>NAT</em>.</li>
+</ul>
+</dd>
+<dt>Quel est le nom du fichier XML contenant la configuration de votre
+machine ?</dt>
+<dd>
+<ul>
+<li>Le nom du fichier XML contenant la configuration de votre machine
+est le fichier <code>debian.xml</code></li>
+</ul>
+</dd>
+<dt>Comment vous modifieriez ce fichier de configuration pour mettre 2
+processeurs à votre machine ?</dt>
+<dd>
+<ul>
+<li>Pour mettre 2 processeurs à votre machine, je modifierais le fichier
+de configuration en ajoutant la ligne suivante :
+<code>&lt;vcpu placement='static'&gt;2&lt;/vcpu&gt;.</code></li>
+</ul>
+</dd>
+</dl>
+<h3 id="drawing-questions-installation-os-de-base"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : Installation OS de
+base</h3>
+<dl>
+<dt>Qu’est-ce qu’un fichier iso bootable ?</dt>
+<dd>
+<ul>
+<li>Un fichier iso bootable est un fichier qui s’exécute au démarrage de
+la VM et qui contient une instance d’un système d’exploitation. Il
+permet de créer la machine.</li>
+</ul>
+</dd>
+<dt>Qu’est-ce que MATE ? GNOME ?</dt>
+<dd>
+<ul>
+<li><em>Mate</em> et <em>Gnome</em> sont des environnements graphiques
+de debian</li>
+</ul>
+</dd>
+<dt>Qu’est-ce qu’un serveur web ?</dt>
+<dd>
+<ul>
+<li>Un serveur web est un logiciel qui permet de stocker et de diffuser
+des pages web.</li>
+</ul>
+</dd>
+<dt>Qu’est-ce qu’un serveur ssh ?</dt>
+<dd>
+<ul>
+<li>SSH est un protocole de communication sécurisé qui permet d’accéder
+à distance à un serveur.</li>
+</ul>
+</dd>
+<dt>Qu’est-ce qu’un serveur mandataire ?</dt>
+<dd>
+<ul>
+<li>Un serveur mandataire est un serveur qui permet de filtrer les
+requêtes des clients.</li>
+</ul>
+</dd>
+</dl>
+<h3 id="drawing-questions-sudo"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : sudo</h3>
+<dl>
+<dt>Comment peux-ton savoir à quels groupes appartient l’utilisateur
+user ?</dt>
+<dd>
+<ul>
+<li>On utilise la commande : $ groups user</li>
+</ul>
+</dd>
+</dl>
+<h3 id="drawing-questions-suppléments-invités"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : Suppléments
+invités</h3>
+<dl>
+<dt>Quelle est la version du noyau Linux utilisé par votre VM ?
+N’oubliez pas, comme pour toutes les questions, de justifier votre
+réponse.</dt>
+<dd>
+<ul>
+<li>On l’obtient avec la commande uname -r, uname donne des informations
+sur le système qu’on utilise. Ici il s’agit de amd64.</li>
+</ul>
+</dd>
+<dt>À quoi servent les suppléments invités ? Donner 2 principales
+raisons de les installer.</dt>
+<dd>
+<ul>
+<li>Les suppléments invités servent à :<br />
+-&gt; améliorer les performances de la machine virtuelle<br />
+-&gt; faciliter le partage de fichiers entre la machine virtuelle et
+l’hôte.</li>
+</ul>
+</dd>
+<dt>À quoi sert la commande mount (dans notre cas de figure et dans le
+cas général) ?</dt>
+<dd>
+<ul>
+<li>Elle permet de monter une partition sur le disque dans le cas
+général.</li>
+</ul>
+</dd>
+</dl>
+<h3 id="drawing-questions-quelques-questions"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : Quelques
+questions</h3>
+<dl>
+<dt>Il existe 3 durées de prise en charge (support) de ces versions : la
+durée minimale la durée en support long terme (LTS) et la durée en
+support long terme étendue (ELTS). Quelles sont les durées de ces prises
+en charge ?</dt>
+<dd>
+<ul>
+<li>La durée minimale, de support long terme (LTS) et celle en support
+long terme étendue (ELTS) sont de 5 ans</li>
+</ul>
+</dd>
+<dt>Pendant combien de temps les mises à jour de sécurité seront-elles
+fournies ?</dt>
+<dd>
+<ul>
+<li>Les mises à jour de sécurité seront fournies pendant 5 ans.</li>
+</ul>
+</dd>
+<dt>Combien de version au minimum sont activement maintenues par Debian
+? Donnez leur nom générique (= les types de distribution).</dt>
+<dd>
+<ul>
+<li>Il y a 3 versions au minimum activement maintenues par Debian :
+<em>stable, testing</em> et <em>unstable</em>.</li>
+</ul>
+</dd>
+<dt>Chaque distribution majeur possède un nom de code différent. Par
+exemple la version majeur actuelle (Debian 12) se nomme bookworm. D’où
+viennent les noms de code données aux distributions ?</dt>
+<dd>
+<ul>
+<li>Les noms de code donnés aux distributions viennent de personnages de
+Toy Story. La décision d’utiliser des noms provenant de Toy Story a été
+prise par Bruce Perens qui était, à l’époque, responsable du projet
+Debian et travaillait chez Pixar, la société qui a produit les
+films.</li>
+</ul>
+</dd>
+<dt>L’un des atouts de Debian fut le nombre d’architecture (≈
+processeurs) officiellement prises en charge. Combien et lesquelles sont
+prises en charge par la version Bullseye ?</dt>
+<dd>
+<ul>
+<li>Il y a 10 architectures officiellement prises en charge par la
+version Bullseye : amd64 (la notre) arm64 armel armhf i386 mips mips64el
+mipsel ppc64el s390x.</li>
+</ul>
+</dd>
+<dt>Quel était le numéro de version de cette distribution ?</dt>
+<dd>
+<ul>
+<li>Le numéro de version de cette distribution était 11.</li>
+</ul>
+</dd>
+<dt>Quel a été le premier nom de code utilisé ?</dt>
+<dd>
+<ul>
+<li>Le premier nom de code utilisé était Buzz.</li>
+</ul>
+</dd>
+</dl>
+<h2 id="2S">2<sup>ème</sup> semaine</h2>
+<p>Nous nous sommes initié au <strong>Markdown</strong> via les sites
+qui nous ont été fournis pour s’exercer (<a
+href="http://markdowntutorial.com">markdowntutorial.com</a> &amp; <a
+href="http://commonmark.org">commonmark.org</a>) mais
+certain.<em>es</em> d’entre nous savaient déjà l’utiliser par le
+passé.</p>
+<p>Pour le choix de l’éditeur, nous préférons sur navigateur afin de
+s’épargner de devoir installer un logiciel sur chaque machines où nous
+travaillons. Nous avons donc choisi <strong>StackEdit</strong> car après
+avoir essayé d’autres options telles que <strong>NextCloud</strong> ou
+<strong>github/lab</strong>, celui-ci nous paraissait optimal bien qu’on
+ne puisse pas rédiger le rapport en temps réel ensemble comme sur
+<strong>NextCloud</strong>.</p>
+<p>Nous avons exporté notre rapport sous le format .md et nous l’avons
+compilé en HTML avec la commande:</p>
+<p><code>pandoc.exe --standalone --template template-compilation-s203.html rapport-s203-markdown.md -o rapport-s203.html</code></p>
+<p>L’utilisation de l’option --template permet, par exemple, de donner
+un titre à la page et d’utiliser une feuille de style CSS externe.</p>
+<p>En revanche, nous nous sommes heurté.e.s à des obstacles pour la
+compilation au format PDF avec pdflatex.</p>
+<h2 id="3S">3<sup>ème</sup> semaine</h2>
+<h3 id="drawing-questions-interfaces-graphiques-pour-git"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : Interfaces
+graphiques pour <em>git</em></h3>
+<dl>
+<dt>Qu’est-ce que le logiciel gitk ? Comment se lance-t-il ?</dt>
+<dd>
+<ul>
+<li>gitk est un navigateur de dépôt graphique qui permet de voir nos
+branches et nos commits, pulls, push, etc. sur git. Il se lance depuis
+le terminal depuis un dépôt.</li>
+</ul>
+</dd>
+<dt>Qu’est-ce que le logiciel git-gui ? Comment se lance-t-il ?</dt>
+<dd>
+<ul>
+<li>Interface graphique de Git basée sur Tcl/Tk. Git gui permet aux
+utilisateurs d’apporter des modifications à leur dépôt en faisant de
+nouveaux commits, en modifiant les commits existants, en créant des
+branches, en effectuant des fusions locales, et en récupérant/poussant
+vers des dépôts distants.</li>
+</ul>
+</dd>
+<dd>
+<ul>
+<li>Contrairement à gitk, git gui se concentre sur la génération de
+commit et l’annotation de fichiers uniques et n’affiche pas l’historique
+du projet. Il fournit cependant des actions de menu pour démarrer une
+session gitk à partir de git gui.</li>
+</ul>
+</dd>
+<dt>Pourquoi avez-vous choisi ce logiciel ?</dt>
+<dd>
+<ul>
+<li>Nous avons choisi <a href="https://www.gitkraken.com/">GitKraken</a>
+car son interface semble plus logique, intuitive et esthéthiquement
+plaisante.</li>
+</ul>
+</dd>
+<dt>Comment l’avez vous installé ?</dt>
+<dd>
+<ul>
+<li>Sur leur site avec la version demo Linux-Debian. L’essai gratuit
+couvre entièrement notre temps d’utilisation du logiciel pour la
+SAE.</li>
+</ul>
+</dd>
+<dt>Comparer-le aux outils inclus avec git (et installé précédemment)
+ainsi qu’avec ce qui serait fait 2/3 | 1.1. Configuration globale de git
+en ligne de commande pure : fonctionnalités avantages,
+inconvénients…</dt>
+<dd>
+<ul>
+<li>L’interface est logique (schéma clairs, différentes couleurs,
+interface simpliste.) et nous permet de visualiser simplement
+l’arborescence, nous faisant gagner énormément de temps. Des outils nous
+permettent de visualiser les modifications rapidement en passant le
+curseur dessus, on dispose également de stats par utilisateurs et
+d’actions effectuables simultanément sur plusieurs repository
+sélectionnés (fetch, pull, clone ect).</li>
+</ul>
+</dd>
+</dl>
+<h2 id="4S">4<sup>ème</sup> semaine</h2>
+<h3 id="drawing-questions-quest-ce-que-gitea"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : Qu’est ce que
+<em>Gitea</em> ?</h3>
+<p>Gitea est une forge logicielle libre en Go sous licence MIT, pour
+l’hébergement de développement logiciel, basé sur le logiciel de gestion
+de versions Git pour la gestion du code source, comportant un système de
+suivi des bugs, un wiki, ainsi que des outils pour la relecture de code.
+(Source Wikipédia)</p>
+<h3 id="drawing-questions-à-quels-logiciels-peut-on-le-comparer"><img
+src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Question_mark_alternate.svg/788px-Question_mark_alternate.svg.png"
+width="20" alt="drawing" /> <mark>Questions</mark> : À quels logiciels
+peut-on le comparer ?</h3>
+<h3 id="drawing-installation-de-gitea"><img
+src="https://cdn-icons-png.flaticon.com/512/73/73575.png" width="35"
+alt="drawing" /> <mark>Installation de Gitea</mark></h3>
+<ul>
+<li>On commence par ajouter la règle de redirection de port</li>
+</ul>
+<p><img
+src="https://cdn.discordapp.com/attachments/1072839621567856690/1218651902045327391/Sans_titre.png?ex=66087106&amp;is=65f5fc06&amp;hm=9b8d57958b4eb5c5e24f237b782bed7447981b2bdedd1f91e9192ae1eb2f80bb&amp;" /></p>
+<ul>
+<li>On utilise wget avec le lien de téléchargement associé à notre
+version de linux, en l’occurrence : linux-amd64 (cf. Semaine 06 -
+Question 4)</li>
+</ul>
+<p><code>&gt; wget -O gitea https://dl.gitea.com/gitea/1.21.7/gitea-1.21.7-linux-amd64</code></p>
+<p><code>&gt; chmod +x gitea</code></p>
+<ul>
+<li><p>Télécharger le fichier asc : <a
+href="https://dl.gitea.com/gitea/1.21.7/gitea-1.21.7-linux-amd64.asc"
+class="uri">https://dl.gitea.com/gitea/1.21.7/gitea-1.21.7-linux-amd64.asc</a></p></li>
+<li><p>Ajout des clés binaires</p></li>
+</ul>
+<p><code>&gt; gpg --keyserver keys.openpgp.org --recv 7C9E68152594688862D62AF62D9AE806EC1592E2</code></p>
+<p><code>&gt; gpg --verify gitea-1.21.7-linux-amd64.asc gitea</code></p>
+<ul>
+<li>Création d’un utilisateur “git”</li>
+</ul>
+<p><code>&gt;adduser \ --system \ --shell /bin/bash \ --gecos 'Git Version Control' \ --group \ --disabled-password \ --home /home/git \ git</code></p>
+<ul>
+<li>Création des dossiers nécessaires</li>
+</ul>
+<p><code>&gt; mkdir -p /var/lib/gitea/{custom,data,log}</code></p>
+<p><code>chown -R git:git /var/lib/gitea/</code></p>
+<p><code>chmod -R 750 /var/lib/gitea/</code></p>
+<p><code>mkdir /etc/gitea</code></p>
+<p><code>chown root:git /etc/gitea</code></p>
+<p><code>chmod 770 /etc/gitea</code></p>
+</div>
+  </body>
+</html>
